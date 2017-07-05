@@ -1,0 +1,225 @@
+model {
+  # -------------------------------
+  # parameter priors
+  # -------------------------------
+  
+  n1f ~ dnorm(10, 0.01)T(0,)
+  N.1.F[1] <- round(n1f)    
+  
+  naf ~ dnorm(10, 0.01)T(0,)
+  N.sad.F[1] <- round(naf)      
+  
+  nif ~ dnorm(10, 0.01)T(0,)
+  N.imm.F[1] <- round(nif)   
+    
+  n1m ~ dnorm(10, 0.01)T(0,)
+  N.1.M[1] <- round(n1m)    
+  
+  nam ~ dnorm(10, 0.01)T(0,)
+  N.sad.M[1] <- round(nam)      
+
+  nim ~ dnorm(10, 0.01)T(0,)
+  N.imm.M[1] <- round(nim)   
+
+  for (t in 1:(nyears-1)) {
+    logit(phi1.F[t]) <- l.m.phi1.F + epsilon.phi1.F[t]    # First year apparent survival (FEMALE)
+    logit(phia.F[t]) <- l.m.phia.F + epsilon.phia.F[t]    # Adult apparent survival (FEMALE)
+    
+    logit(phi1.M[t]) <- l.m.phi1.M + epsilon.phi1.M[t]    # First year apparent survival (MALE)
+    logit(phia.M[t]) <- l.m.phia.M + epsilon.phia.M[t]    # Adult apparent survival (MALE)
+    
+    logit(recap.1.F[t]) <- l.m.recap.1.F + err.recap.1.F[t]
+    logit(recap.a.F[t]) <- l.m.recap.a.F + err.recap.a.F[t]
+
+    logit(recap.1.M[t]) <- l.m.recap.1.M + err.recap.1.M[t]
+    logit(recap.a.M[t]) <- l.m.recap.a.M + err.recap.a.M[t]
+    
+    log(omega.F[t]) <- l.m.omega.F + epsilon.omega.F[t]   # Immigration (FEMALE)
+    log(omega.M[t]) <- l.m.omega.M + epsilon.omega.M[t]   # Immigration (MALE)
+  }
+  for (t in 1:nyears) {
+    log(prod[t]) <- l.m.prod + epsilon.prod[t]                  # overall productivity
+  }
+  
+  # SD precision for temporal variability of demographic parameters
+  tau.phi1.F ~ dgamma(0.001, 0.001)
+  tau.phia.F ~ dgamma(0.001, 0.001)
+
+  tau.recap.1.F ~ dgamma(0.001, 0.001)
+  tau.recap.a.F ~ dgamma(0.001, 0.001)
+
+  tau.phi1.M ~ dgamma(0.001, 0.001)
+  tau.phia.M ~ dgamma(0.001, 0.001)
+
+  tau.recap.1.M ~ dgamma(0.001, 0.001)
+  tau.recap.a.M ~ dgamma(0.001, 0.001)
+
+  tau.omega.F ~ dgamma(0.001, 0.001)
+  tau.omega.M ~ dgamma(0.001, 0.001)
+
+  tau.prod ~ dgamma(0.001, 0.001)
+
+  # mean demographic parameters
+  m.phi1.F ~ dunif(0, 1)
+  m.phia.F ~ dunif(0, 1)
+
+  m.recap.1.F ~ dunif(0, 1)
+  m.recap.a.F ~ dunif(0, 1)
+
+  m.phi1.M ~ dunif(0, 1)
+  m.phia.M ~ dunif(0, 1)
+
+  m.recap.1.M ~ dunif(0, 1)
+  m.recap.a.M ~ dunif(0, 1)
+
+  m.omega.F ~ dunif(0, 100)
+  m.omega.M ~ dunif(0, 100)
+	
+  m.prod ~ dunif(0, 5)
+
+  # back transform means
+  l.m.phi1.F <-  log(m.phi1.F / (1-m.phi1.F))              
+  l.m.phia.F <-  log(m.phia.F / (1-m.phia.F))              
+  
+  l.m.recap.1.F <- log(m.recap.1.F / (1-m.recap.1.F))
+  l.m.recap.a.F <- log(m.recap.a.F / (1-m.recap.a.F))
+
+  l.m.phi1.M <-  log(m.phi1.M / (1-m.phi1.M))              
+  l.m.phia.M <-  log(m.phia.M / (1-m.phia.M))              
+  
+  l.m.recap.1.M <- log(m.recap.1.M / (1-m.recap.1.M))
+  l.m.recap.a.M <- log(m.recap.a.M / (1-m.recap.a.M))
+
+  l.m.omega.F <- log(m.omega.F)             
+  l.m.omega.M <- log(m.omega.M)            
+
+  l.m.prod <- log(m.prod)
+
+  # Distribution of error terms for variable demographic rates
+  for (t in 1:(nyears-1)) {
+    epsilon.phi1.F[t] ~ dnorm(0, tau.phi1.F)  # first year survival (FEMALE)
+    epsilon.phia.F[t] ~ dnorm(0, tau.phia.F)  # adult survival (FEMALE)
+    
+    err.recap.1.F[t] ~ dnorm(0, tau.recap.1.F)
+    err.recap.a.F[t] ~ dnorm(0, tau.recap.a.F)
+    
+    epsilon.phi1.M[t] ~ dnorm(0, tau.phi1.M)  # first year survival (MALE)
+    epsilon.phia.M[t] ~ dnorm(0, tau.phia.M)  # adult survival (MALE)
+    
+    err.recap.1.M[t] ~ dnorm(0, tau.recap.1.M)
+    err.recap.a.M[t] ~ dnorm(0, tau.recap.a.M)
+    
+    epsilon.omega.F[t] ~ dnorm(0, tau.omega.F)    # no. immigrants (FEMALE)
+    epsilon.omega.M[t] ~ dnorm(0, tau.omega.M)    # no. immigrants (MALE)
+  }
+  
+  for (t in 1:nyears) {
+    epsilon.prod[t] ~ dnorm(0, tau.prod)          # productivity
+  }
+
+  # -------------------------------
+  # Derived parameters
+  # -------------------------------
+  for (t in 1:(nyears-1)) {
+    immRate.F[t] <- N.imm.F[t+1] / b.F[t]  # (FEMALES)
+    immRate.M[t] <- N.imm.M[t+1] / b.M[t]  # (MALES)
+
+    Ntot[t] <- b.F[t] + b.M[t]
+    
+    lambda[t] <- Ntot[t+1] / Ntot[t]
+
+    logla[t] <- log(lambda[t])        # log lambda for geometric mean
+  }
+  
+  Ntot[nyears] <- b.F[nyears] + b.M[nyears]
+
+  
+  m.lambda <- exp(1/(nyears-1) * sum(logla[1:(nyears-1)])) # Geometric mean for population growth
+
+  # -------------------------------
+  # Likelihood
+  # -------------------------------
+  
+  # The system process, i.e., the true state space
+  for (t in 2:nyears) {
+
+    # expected mean number of TOTAL fledglings based on demographic parameters
+    meanFl[t-1] <- b.F[t-1] * prod[t-1]
+    fl[t-1] ~ dpois(meanFl[t-1])
+    
+    fl.F[t-1] ~ dbin(0.5, fl[t-1])              # no. fledglings (FEMALE)
+    fl.M[t-1] <- fl[t-1] - round(fl.F[t-1])     # no. fledglings (MALE)
+    
+    N.1.F[t] ~ dbin(phi1.F[t-1], round(fl.F[t-1]))    # local recruits (FEMALE)
+    N.1.M[t] ~ dbin(phi1.M[t-1], round(fl.M[t-1]))    # local recruits (MALE)
+
+    N.sad.F[t] ~ dbin(phia.F[t-1], round(b.F[t-1]))          # returning adults (FEMALE)
+    N.sad.M[t] ~ dbin(phia.M[t-1], round(b.M[t-1]))          # returning adults (MALE) 
+    
+    N.imm.F[t] ~ dpois(omega.F[t-1])     # no. immigrants (FEMALE) remember omega are counts not rates! better estimation
+    N.imm.M[t] ~ dpois(omega.M[t-1])     # no. immigrants (MALE) 
+  }
+  
+  # Observation process, i.e., the adjustment to the state space model based on empirical observation bias
+  for (t in 1:nyears) {
+    b.F[t] <- N.sad.F[t] + N.imm.F[t] + N.1.F[t]  # no. breeding females
+    b.M[t] <- N.sad.M[t] + N.imm.M[t] + N.1.M[t]  # no. breeding males
+
+    y.F[t] ~ dpois(b.F[t])
+    y.M[t] ~ dpois(b.M[t])
+  }
+
+  # likelihood for CJS capture recapture with 2 age classes, 2 sex classes
+  # multinomial likelihood
+  # Likelihhod
+  for (t in 1:(nyears-1)){
+    marray.F[t,1:nyears] ~ dmulti(pr.F[t,], r.F[t])
+    marray.F[t+nyears-1,1:nyears] ~ dmulti(pr.F[t+nyears-1,], r.F[t+nyears-1])
+    
+    marray.M[t,1:nyears] ~ dmulti(pr.M[t,], r.M[t])
+    marray.M[t+nyears-1,1:nyears] ~ dmulti(pr.M[t+nyears-1,], r.M[t+nyears-1])
+  }
+    
+  # m-array cell probabilities
+  for (t in 1:(nyears-1)){
+    q.F[t] <- 1-recap.a.F[t]		# probability of non-capture (males)
+    q.M[t] <- 1-recap.a.M[t]		# probability of non-capture (males)
+
+    # main diagonal
+    pr.F[t,t] <- phi1.F[t] * recap.1.F[t]
+    pr.F[t+nyears-1,t] <- phia.F[t] * recap.a.F[t]
+
+    pr.M[t,t] <- phi1.M[t] * recap.1.M[t]
+    pr.M[t+nyears-1,t] <- phia.M[t] * recap.a.M[t]
+
+    # above main diagonal
+    for (j in (t+1):(nyears-1)){
+      pr.F[t,j] <- phi1.F[t] * prod(phia.F[(t+1):j]) * (1-recap.1.F[t]) * prod(q.F[t:(j-1)]) * recap.a.F[j] / q.F[t]
+      pr.F[t+nyears-1,j] <- prod(phia.F[t:j]) * prod(q.F[t:(j-1)]) * recap.a.F[j]
+      
+      pr.M[t,j] <- phi1.M[t] * prod(phia.M[(t+1):j]) * (1-recap.1.M[t]) * prod(q.M[t:(j-1)]) * recap.a.M[j] / q.M[t]
+      pr.M[t+nyears-1,j] <- prod(phia.M[t:j]) * prod(q.M[t:(j-1)]) * recap.a.M[j]
+    }
+    
+    # below main diagonal
+    for (j in 1:(t-1)){
+      pr.F[t,j] <- 0
+      pr.F[t+nyears-1,j] <- 0
+      
+      pr.M[t,j] <- 0
+      pr.M[t+nyears-1,j] <- 0
+    }
+    
+    # last column
+    pr.F[t,nyears] <- 1 - sum(pr.F[t,1:(nyears-1)])
+    pr.F[t+nyears-1,nyears] <- 1 - sum(pr.F[t+nyears-1,1:(nyears-1)])
+    
+    pr.M[t,nyears] <- 1 - sum(pr.M[t,1:(nyears-1)])
+    pr.M[t+nyears-1,nyears] <- 1 - sum(pr.M[t+nyears-1,1:(nyears-1)])
+  }
+  
+  # Poisson regressions for productivity data
+  for (t in 1:nyears) {
+    numChicks[t] ~ dpois(prod[t])
+  }
+}

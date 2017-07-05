@@ -121,7 +121,7 @@ nestCount <- nests[!endsWith(nests$Nest, "R"),] %>%
 				group_by(Year) %>%
 				count()
 
-y.F <- y.M <- nestCount$n
+y.F <- y.M <- R <- nestCount$n
 
 # productivity is, for now, the count of chicks banded each year
 numChicks <- sapply(min(chicks$Year):max(chicks$Year),

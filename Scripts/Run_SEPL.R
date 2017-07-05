@@ -2,13 +2,13 @@ source("Scripts/Init_SEPL.R")
 
 jags.data <- list(nyears=nyears,
 				  marray.F=marray.F, marray.M=marray.M,
-				  r.F=r.F, r.M=r.M, y.F=y.F, y.M=y.M,
+				  r.F=r.F, r.M=r.M, y.F=y.F, y.M=y.M, R=R,
 				  numChicks=numChicks)
 
 jags.inits <- function() {
   list(m.phi1.F=runif(1,0,1), m.phia.F=runif(1,0,1),
        m.recap.1.F=runif(1,0,1), m.recap.a.F=runif(1,0,1),
-       m.phi1.M=runif(1,0.1,1), m.phia.M=runif(1,0,1),
+       m.phi1.M=runif(1,0,1), m.phia.M=runif(1,0,1),
        m.recap.1.M=runif(1,0,1), m.recap.a.M=runif(1,0,1),
        m.omega.F=runif(1,0,10), m.omega.M=runif(1,0,10),
        m.prod= runif(1,0,5),
@@ -29,4 +29,4 @@ params <- c("phi1.F", "phia.F", "m.phi1.F","m.phia.F",
             "lambda", "m.lambda")
 
 ipm <- jags(data=jags.data, inits=jags.inits, parameters.to.save=params, model.file="Scripts/ipm.SEPL.bug",
-                     n.chains=3, n.thin=5, n.iter=50000, n.burnin=25000, parallel=TRUE)
+                     n.chains=3, n.thin=10, n.iter=100000, n.burnin=50000, parallel=TRUE)

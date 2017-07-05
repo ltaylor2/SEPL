@@ -220,6 +220,7 @@ model {
   
   # Poisson regressions for productivity data
   for (t in 1:nyears) {
-    numChicks[t] ~ dpois(prod[t])
+    numChicks[t] ~ dpois(rho[t])
+    rho[t] <- prod[t] * R[t]
   }
 }
